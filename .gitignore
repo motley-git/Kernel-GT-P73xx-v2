@@ -24,6 +24,7 @@
 *.str.tmp
 *.cpio
 scripts/
+Documentation/
 
 #
 # Top-level generic files
@@ -50,8 +51,8 @@ include/linux/version.h
 include/linux/utsrelease.h
 include/linux/bounds.h
 include/generated
-arch/arm/boot/vmlinux
-arch/arm/boot/piggy.gzip
+arch/arm/boot/compressed/vmlinux
+arch/arm/boot/compressed/piggy.gzip
 arch/arm/boot/Image
 arch/arm/boot/zImage
 
