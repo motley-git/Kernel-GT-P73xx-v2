@@ -218,9 +218,8 @@ struct tegra_dc_out {
 	unsigned		h_size;
 	unsigned		v_size;
 
-	int			dcc_bus;
-	int			hotplug_gpio;
-
+	int				dcc_bus;
+	int				hotplug_gpio;
 	unsigned		max_pixclock;
 	unsigned		order;
 	unsigned		align;
@@ -363,9 +362,6 @@ void tegra_dc_disable(struct tegra_dc *dc);
 u32 tegra_dc_get_syncpt_id(const struct tegra_dc *dc);
 u32 tegra_dc_incr_syncpt_max(struct tegra_dc *dc);
 void tegra_dc_incr_syncpt_min(struct tegra_dc *dc, u32 val);
-
-int tegra_dc_set_default_emc(struct tegra_dc *dc);
-int tegra_dc_set_dynamic_emc(struct tegra_dc_win *windows[], int n);
 
 /* tegra_dc_update_windows and tegra_dc_sync_windows do not support windows
  * with differenct dcs in one call

@@ -574,10 +574,13 @@ static bool tegra_dc_hdmi_mode_filter(const struct tegra_dc *dc,
 	int i;
 	int clock_per_frame;
 
+	if (!mode->pixclock)
+	    return false;
+
 	for (i = 0; i < ARRAY_SIZE(tegra_dc_hdmi_supported_modes); i++) {
-		if (tegra_dc_hdmi_mode_equal(&tegra_dc_hdmi_supported_modes[i], mode) &&
-			tegra_dc_hdmi_valid_pixclock(dc, &tegra_dc_hdmi_supported_modes[i])) {
-			memcpy(mode, &tegra_dc_hdmi_supported_modes[i], sizeof(*mode));
+		const struct fb_videomode *supported_mode = &tegra_dc_hdmi_supported_modes[i];
+		if (tegra_dc_hdmi_mode_equal(supported_mode, mode) && tegra_dc_hdmi_valid_pixclock(dc, supported_mode)) {
+			memcpy(mode, supported_mode, sizeof(*mode));
 			mode->flag = FB_MODE_IS_DETAILED;
 			clock_per_frame = tegra_dc_calc_clock_per_frame(mode);
 			mode->refresh = (PICOS2KHZ(mode->pixclock) * 1000)
@@ -1179,7 +1182,7 @@ static void tegra_dc_hdmi_setup_avi_infoframe(struct tegra_dc *dc, bool dvi)
 			avi.m = HDMI_AVI_M_16_9;
 			avi.vic = 18;
 		} else {
-			avi.m = HDMI_AVI_M_16_9;
+			avi.m = HDMI_AVI_M_4_3;
 			avi.vic = 17;
 		}
 	} else if (dc->mode.v_active == 720 ||

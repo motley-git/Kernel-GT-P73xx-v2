@@ -56,11 +56,6 @@ static int use_dynamic_emc = 1;
 
 module_param_named(use_dynamic_emc, use_dynamic_emc, int, S_IRUGO | S_IWUSR);
 
-static int windows_idle_detection_time = 0;
-
-module_param_named(windows_idle_detection_time, windows_idle_detection_time,
-		   int, S_IRUGO | S_IWUSR);
-
 struct tegra_dc *tegra_dcs[TEGRA_MAX_DC];
 
 DEFINE_MUTEX(tegra_dc_lock);
@@ -596,26 +591,7 @@ static void tegra_dc_change_emc(struct tegra_dc *dc)
 	}
 }
 
-static void tegra_dc_reduce_emc_worker(struct work_struct *work)
-{
-	struct tegra_dc *dc;
-
-	dc = container_of(to_delayed_work(work), struct tegra_dc,
-	    reduce_emc_clk_work);
-
-	mutex_lock(&dc->lock);
-
-	if (!dc->enabled) {
-		mutex_unlock(&dc->lock);
-		return;
-	}
-
-	tegra_dc_change_emc(dc);
-
-	mutex_unlock(&dc->lock);
-}
-
-int  tegra_dc_set_dynamic_emc(struct tegra_dc_win *windows[], int n)
+static int tegra_dc_set_dynamic_emc(struct tegra_dc_win *windows[], int n)
 {
 	unsigned long new_rate;
 	struct tegra_dc *dc;
@@ -625,58 +601,10 @@ int  tegra_dc_set_dynamic_emc(struct tegra_dc_win *windows[], int n)
 
 	dc = windows[0]->dc;
 
-	mutex_lock(&dc->lock);
-
-	if (!dc->enabled) {
-		mutex_unlock(&dc->lock);
-		return -EFAULT;
-	}
-
 	/* calculate the new rate based on this POST */
 	new_rate = tegra_dc_get_emc_rate(windows, n);
 
 	dc->new_emc_clk_rate = new_rate;
-
-	/*
-	 * If we don't need set EMC immediately after a frame POST, we schedule
-	 * a work_queue to reduce EMC in the future. This work_queue task will
-	 * not be executed if the another POST comes before the idle time
-	 * expired.
-	 */
-	if (NEED_UPDATE_EMC_ON_EVERY_FRAME)
-		tegra_dc_change_emc(dc);
-	else
-		schedule_delayed_work(&dc->reduce_emc_clk_work,
-			msecs_to_jiffies(windows_idle_detection_time));
-
-	mutex_unlock(&dc->lock);
-
-	return 0;
-}
-
-int  tegra_dc_set_default_emc(struct tegra_dc *dc)
-{
-	/*
-	 * POST happens whenever this function is called, we first delete any
-	 * reduce_emc_clk_work, then we always set the DC EMC clock to default
-	 * value.
-	 */
-	cancel_delayed_work_sync(&dc->reduce_emc_clk_work);
-
-	if (NEED_UPDATE_EMC_ON_EVERY_FRAME)
-		return 0;
-
-	mutex_lock(&dc->lock);
-
-	if (!dc->enabled) {
-		mutex_unlock(&dc->lock);
-		return -EFAULT;
-	}
-
-	dc->new_emc_clk_rate = tegra_dc_get_default_emc_clk_rate(dc);
-	tegra_dc_change_emc(dc);
-
-	mutex_unlock(&dc->lock);
 
 	return 0;
 }
@@ -698,6 +626,8 @@ int tegra_dc_update_windows(struct tegra_dc_win *windows[], int n)
 		mutex_unlock(&dc->lock);
 		return -EFAULT;
 	}
+
+	tegra_dc_set_dynamic_emc(windows, n);
 
 	if (no_vsync)
 		tegra_dc_writel(dc, WRITE_MUX_ACTIVE | READ_MUX_ACTIVE, DC_CMD_STATE_ACCESS);
@@ -1234,6 +1164,9 @@ int tegra_dc_set_fb_mode(struct tegra_dc *dc,
 		const struct fb_videomode *fbmode, bool stereo_mode)
 {
 	struct tegra_dc_mode mode;
+
+	if (!fbmode->pixclock)
+		return -EINVAL;
 
 	mode.pclk = PICOS2KHZ(fbmode->pixclock) * 1000;
 	mode.h_sync_width = fbmode->hsync_len;
@@ -2004,7 +1937,6 @@ static int tegra_dc_probe(struct nvhost_device *ndev)
 
 	dc->clk = clk;
 	dc->emc_clk = emc_clk;
-	INIT_DELAYED_WORK(&dc->reduce_emc_clk_work, tegra_dc_reduce_emc_worker);
 
 	dc->base_res = base_res;
 	dc->base = base;
