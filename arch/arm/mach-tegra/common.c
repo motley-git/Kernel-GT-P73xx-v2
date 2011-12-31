@@ -96,6 +96,9 @@ static struct board_info tegra_board_info = {
 
 void (*tegra_reset)(char mode, const char *cmd);
 
+/* WARNING: There is implicit client of pllp_out3 like i2c, uart, dsi
+ * and so this clock (pllp_out3) should never be disabled.
+ */
 static __initdata struct tegra_clk_init_table common_clk_init_table[] = {
 	/* set up clocks that should always be on */
 	/* name		parent		rate		enabled */

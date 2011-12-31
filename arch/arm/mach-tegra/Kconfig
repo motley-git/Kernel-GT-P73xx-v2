@@ -261,4 +261,9 @@ config TEGRA_CPU_FREQ_MIN
         int "Min CPU Frequency"
         depends on TEGRA_CPU_FREQ_SET_MIN_MAX
         default 216000
-
+        
+config ICS	
+        bool "Add support for Ice Cream Sandwich"	
+        default n	
+        help	
+          Say Y here to enable support for Ice Cream Sandwich.

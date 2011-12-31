@@ -29,9 +29,22 @@ struct tegra_i2c_platform_data {
 	int bus_mux_len[TEGRA_I2C_MAX_BUS];
 	unsigned long bus_clk_rate[TEGRA_I2C_MAX_BUS];
 	bool is_dvc;
+	bool is_clkon_always;
 	int retries;
 	int timeout;	/* in jiffies */
 	u16 slave_addr;
+	int scl_gpio[TEGRA_I2C_MAX_BUS];
+	int sda_gpio[TEGRA_I2C_MAX_BUS];
+	int (*arb_recovery)(void);
+};
+
+struct tegra_i2c_slave_platform_data {
+	int adapter_nr;
+	const struct tegra_pingroup_config *pinmux;
+	int bus_mux_len;
+	unsigned long bus_clk_rate;
+	int max_rx_buffer_size;
+	int max_tx_buffer_size;
 };
 
 #endif /* _LINUX_I2C_TEGRA_H */
