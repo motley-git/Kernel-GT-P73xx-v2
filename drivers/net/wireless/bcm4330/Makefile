@@ -110,6 +110,7 @@ ifdef CONFIG_MACH_SAMSUNG_P4TMO
 EXTRA_CFLAGS += -DMOBILEAP_CERT
 endif
 
+EXTRA_CFLAGS += -fno-pic
 ###############################################################################################
 
 EXTRA_CFLAGS += -I$(src)/src/include/
