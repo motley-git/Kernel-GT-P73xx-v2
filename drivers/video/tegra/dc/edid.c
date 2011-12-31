@@ -404,7 +404,7 @@ int tegra_edid_get_monspecs(struct tegra_edid *edid, struct fb_monspecs *specs)
 
 	ret = tegra_edid_read_block(edid, 0, edid->data);
 	if (ret) {
-		printk(KERN_ERR "[HDMI][ERROR] edid read first block fail\n");
+		//printk(KERN_ERR "[HDMI][ERROR] edid read first block fail\n");
 		return ret;
 	}
 
